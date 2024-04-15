@@ -59,5 +59,9 @@ public class CategoryController {
         return Result.success();
     }
 
-
+    @GetMapping("/list")
+    @ApiOperation("根据类型查询分类")
+    public Result list(@RequestParam String type) {
+        return Result.success(categoryService.getByType(type));
+    }
 }
