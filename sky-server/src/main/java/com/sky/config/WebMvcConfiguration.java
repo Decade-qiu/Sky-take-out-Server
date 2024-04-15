@@ -4,6 +4,7 @@ import com.sky.interceptor.JwtTokenAdminInterceptor;
 import com.sky.json.JacksonObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -18,6 +19,7 @@ import springfox.documentation.service.ApiInfo;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -29,6 +31,9 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
 
     @Autowired
     private JwtTokenAdminInterceptor jwtTokenAdminInterceptor;
+
+    @Value("${static.url}")
+    private String localPath;
 
     /**
      * 注册自定义拦截器
@@ -71,6 +76,17 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
     protected void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/doc.html").addResourceLocations("classpath:/META-INF/resources/");
         registry.addResourceHandler("/webjars/**").addResourceLocations("classpath:/META-INF/resources/webjars/");
+
+        File file = new File(localPath);
+
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+
+        log.info("静态资源映射路径: {}", file.getAbsolutePath());
+
+        registry.addResourceHandler("/static/**")
+                .addResourceLocations("file:" + file.getAbsolutePath() + File.separator);
     }
 
     /**
@@ -87,4 +103,5 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
         // 将自己的消息转化器加入容器中
         converters.add(0, converter);
     }
+
 }
