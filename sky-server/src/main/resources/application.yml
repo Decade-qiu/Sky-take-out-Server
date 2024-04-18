@@ -44,6 +44,14 @@ sky:
     # 设置前端传递过来的令牌名称
     admin-token-name: token
 
+    user-secret-key: qzj
+    user-ttl: 72000000
+    user-token-name: authentication
+
+  wechat:
+    appid: ${sky.wechat.appid}
+    secret: ${sky.wechat.secret}
+
   shop:
     key: "SHOP_STATUS"
 
