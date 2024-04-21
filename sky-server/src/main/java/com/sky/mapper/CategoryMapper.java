@@ -34,8 +34,5 @@ public interface CategoryMapper {
     )
     void deleteById(Long id);
 
-    @Select(
-            "select * from category where type = #{type}"
-    )
     List<Category> selectById(String type);
 }

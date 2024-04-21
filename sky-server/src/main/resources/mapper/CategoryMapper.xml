@@ -41,4 +41,13 @@
         where id = #{id}
     </update>
 
+    <select id="selectById" resultType="com.sky.entity.Category" parameterType="String">
+        select * from category
+        <where>
+            <if test="type != null">
+                and type = #{type}
+            </if>
+        </where>
+    </select>
+
 </mapper>
