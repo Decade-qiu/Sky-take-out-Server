@@ -115,6 +115,9 @@ public class OrderServiceImpl implements OrderService {
         OrderPaymentVO vo = jsonObject.toJavaObject(OrderPaymentVO.class);
         vo.setPackageStr(jsonObject.getString("package"));
 
+        // 模拟支付成功
+        paySuccess(ordersPaymentDTO.getOrderNumber());
+
         return vo;
     }
 
