@@ -6,18 +6,18 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.*;
 import com.sky.exception.OrderBusinessException;
 import com.sky.mapper.*;
 import com.sky.result.PageResult;
 import com.sky.service.OrderService;
 import com.sky.vo.OrderPaymentVO;
+import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 import com.sky.websocket.WebSocketServer;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
+@Slf4j
 public class OrderServiceImpl implements OrderService {
 
     @Autowired
@@ -49,7 +50,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderSubmitVO submit(OrdersSubmitDTO ordersSubmitDTO){
+    public OrderSubmitVO submit(OrdersSubmitDTO ordersSubmitDTO) {
         Long userId = BaseContext.getCurrentId();
 
         AddressBook addressBook = addressBookMapper.getById(ordersSubmitDTO.getAddressBookId());
@@ -153,7 +154,7 @@ public class OrderServiceImpl implements OrderService {
         // 设置分页
         PageHelper.startPage(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
 
-        ordersPageQueryDTO.setUserId(BaseContext.getCurrentId());
+        ordersPageQueryDTO.setUserId(ordersPageQueryDTO.getUserId());
 
         // 分页条件查询
         Page<Orders> page = orderMapper.pageQuery(ordersPageQueryDTO);
@@ -275,4 +276,54 @@ public class OrderServiceImpl implements OrderService {
         webSocketServer.sendToAllClient(JSON.toJSONString(map));
     }
 
+    @Override
+    public OrderStatisticsVO statistics() {
+        Integer toBeConfirmed = orderMapper.statistics(Orders.TO_BE_CONFIRMED);
+        Integer confirmed = orderMapper.statistics(Orders.CONFIRMED);
+        Integer deli = orderMapper.statistics(Orders.DELIVERY_IN_PROGRESS);
+        log.info("待接单数量：{}，已接单数量：{}，派送中数量：{}", toBeConfirmed, confirmed, deli);
+        return new OrderStatisticsVO(toBeConfirmed, confirmed, deli);
+    }
+
+    @Override
+    public void confirm(Long id) {
+        Orders orders = new Orders();
+        orders.setId(id);
+        orders.setStatus(Orders.CONFIRMED);
+        orderMapper.update(orders);
+    }
+
+    @Override
+    public void rejection(OrdersRejectionDTO ordersRejectionDTO) {
+        Orders orders = new Orders();
+        orders.setId(ordersRejectionDTO.getId());
+        orders.setStatus(7);
+        orders.setRejectionReason(ordersRejectionDTO.getRejectionReason());
+        orderMapper.update(orders);
+    }
+
+    @Override
+    public void delivery(Long id) {
+        Orders orders = new Orders();
+        orders.setId(id);
+        orders.setStatus(Orders.DELIVERY_IN_PROGRESS);
+        orderMapper.update(orders);
+    }
+
+    @Override
+    public void complete(Long id) {
+        Orders orders = new Orders();
+        orders.setId(id);
+        orders.setStatus(Orders.COMPLETED);
+        orderMapper.update(orders);
+    }
+
+    @Override
+    public void cancel(OrdersCancelDTO ordersCancelDTO) {
+        Orders orders = new Orders();
+        orders.setId(ordersCancelDTO.getId());
+        orders.setStatus(Orders.CANCELLED);
+        orders.setRejectionReason(ordersCancelDTO.getCancelReason());
+        orderMapper.update(orders);
+    }
 }
